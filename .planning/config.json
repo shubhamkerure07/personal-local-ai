@@ -1,0 +1,9 @@
+{
+  "mode": "standard",
+  "profile": "balanced",
+  "workflow": {
+    "research": true,
+    "plan_check": true,
+    "nyquist_audit": false
+  }
+}
