@@ -1,14 +1,11 @@
 # Project State: Personal Local AI System
 
 ## Current Status
-- **Current Phase**: Phase 2 (Ollama Engine Installation & Configuration)
-- **Phase 1 Completed**: Hardware & storage diagnostics completed.
-  - OS: Windows 11
-  - GPU: NVIDIA RTX 4050 Laptop (6141 MiB VRAM), Driver 592.82, CUDA 13.1
-  - RAM: 16 GB Physical
-  - Storage: C:\ SSD 117.5 GB free space
+- **Current Phase**: Phase 3 (Model Selection, Retrieval & GPU Benchmark)
+- **Phase 1 Completed**: Hardware & storage diagnostics (Intel i7, RTX 4050 6GB, 16GB RAM, 117.5GB SSD free).
+- **Phase 2 Completed**: Native Ollama installed (v0.40.16), installer deleted, `OLLAMA_MODELS` configured to `C:\Users\Shubham\.ollama\models`, daemon active with CUDA 13.1 hardware acceleration verified on RTX 4050.
 - **Active Skills**: `docker-expert`, `clean-code`
-- **Active Workspace Recommendation**: `C:\Users\Shubham\.gemini\antigravity\scratch\personal-local-ai`
+- **Active Workspace**: `C:\Users\Shubham\.gemini\antigravity\scratch\personal-local-ai`
 
 ## Next Action
-- Execute Phase 2: Provide clean installation steps for Ollama Windows, configure model storage directory, and verify daemon connectivity.
+- Pull recommended baseline model (e.g. `llama3.2:3b` or `qwen2.5:7b`), run test inference, and verify GPU memory utilization with `nvidia-smi`.

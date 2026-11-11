@@ -8,12 +8,13 @@
 - [x] Verify internal SSD free space (117.5 GB free on C:\ drive).
 - [x] Assess package manager & runtime prerequisites.
 
-### Phase 2: Ollama Engine Installation & Service Configuration [READY]
-- [ ] Install native Ollama Windows binary.
-- [ ] Configure `OLLAMA_MODELS` path and service startup.
-- [ ] Verify Ollama server daemon is responding locally at `http://localhost:11434`.
+### Phase 2: Ollama Engine Installation & Service Configuration [COMPLETED]
+- [x] Install native Ollama Windows binary (v0.40.16).
+- [x] Configure `OLLAMA_MODELS` path (`C:\Users\Shubham\.ollama\models`).
+- [x] Clean up and delete installer executable (`OllamaSetup.exe`).
+- [x] Verify Ollama server daemon listening at `http://127.0.0.1:11434` with NVIDIA RTX 4050 (CUDA 13.1, 6.0 GiB VRAM) detected and active.
 
-### Phase 3: Model Selection, Retrieval & GPU Benchmark
+### Phase 3: Model Selection, Retrieval & GPU Benchmark [READY]
 - [ ] Review hardware-tailored model matrix (Qwen 2.5, Llama 3.2, Gemma 2, Phi 4).
 - [ ] Pull verified pilot model (e.g. `qwen2.5:7b` or `llama3.2:3b`).
 - [ ] Test inference response and verify 100% GPU offload in `nvidia-smi`.
