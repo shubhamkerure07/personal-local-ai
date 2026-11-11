@@ -1,0 +1,17 @@
+# Ignore environment and credential files
+.env
+*.token
+*.key
+*.pem
+credentials.json
+
+# Ignore temporary and binary artifacts
+*.exe
+*.log
+scratch/
+OllamaSetup.exe
+
+# Ignore local models (these are managed on SSD/Google Drive)
+models/
+blobs/
+manifests/
