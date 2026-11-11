@@ -18,7 +18,7 @@ param(
     [string]$ModelName,
 
     [Parameter()]
-    [string]$DriveRoot = 'G:\My Drive\AI-Library',
+    [string]$DriveRoot = '',
 
     [Parameter()]
     [string]$LocalModelsDir = "$env:USERPROFILE\.ollama\models"
@@ -26,6 +26,35 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+function Resolve-DriveRootPath {
+    param([string]$SpecifiedRoot)
+
+    if ($SpecifiedRoot -and (Test-Path $SpecifiedRoot)) {
+        return $SpecifiedRoot
+    }
+
+    # Common Google Drive for Desktop mount locations
+    $candidates = @(
+        "G:\My Drive\AI-Library",
+        "G:\AI-Library",
+        "H:\My Drive\AI-Library",
+        "$env:USERPROFILE\Google Drive\AI-Library",
+        "$env:USERPROFILE\My Drive\AI-Library",
+        "$env:USERPROFILE\GoogleDrive\AI-Library"
+    )
+
+    foreach ($cand in $candidates) {
+        $parent = Split-Path -Parent $cand
+        if (Test-Path $parent) {
+            return $cand
+        }
+    }
+
+    # Staging fallback if Google Drive for Desktop isn't running yet
+    $fallback = Join-Path $env:USERPROFILE "GoogleDrive-AI-Library"
+    return $fallback
+}
 
 function Get-OllamaStoragePath {
     if ($env:OLLAMA_MODELS) {
@@ -50,27 +79,40 @@ function Ensure-GoogleDriveTree {
     }
 }
 
+# Resolve actual drive root path
+$ResolvedDriveRoot = Resolve-DriveRootPath -SpecifiedRoot $DriveRoot
+
 function Show-StorageStatus {
     $modelsPath = Get-OllamaStoragePath
-    $driveModelsPath = Join-Path $DriveRoot 'Models'
+    $driveModelsPath = Join-Path $ResolvedDriveRoot 'Models'
 
     Write-Host "`n=== Personal Local AI: Storage Tiers Status ===" -ForegroundColor Cyan
     Write-Host "Hot Tier (Local SSD): $modelsPath"
-    Write-Host "Cold Tier (Google Drive): $DriveRoot`n"
+    Write-Host "Cold Tier (Google Drive Archive): $ResolvedDriveRoot`n"
 
     # SSD Free Space
-    $cDrive = Get-PSDrive -Name C -ErrorAction SilentlyContinue
-    if ($cDrive) {
-        $freeGB = [math]::Round($cDrive.Free / 1GB, 2)
-        $usedGB = [math]::Round($cDrive.Used / 1GB, 2)
-        Write-Host "Local SSD (C:) Free Space : $freeGB GB (Used: $usedGB GB)" -ForegroundColor Green
+    try {
+        $cDrive = [System.IO.DriveInfo]::new('C')
+        $freeGB = [math]::Round($cDrive.AvailableFreeSpace / 1GB, 2)
+        $totalGB = [math]::Round($cDrive.TotalSize / 1GB, 2)
+        $usedGB = [math]::Round(($cDrive.TotalSize - $cDrive.AvailableFreeSpace) / 1GB, 2)
+        Write-Host "Local SSD (C:) Free Space : $freeGB GB / $totalGB GB (Used: $usedGB GB)" -ForegroundColor Green
+    } catch {
+        # Fallback if DriveInfo fails
     }
 
     # Ollama models on SSD
     Write-Host "`n--- Active Hot Models on SSD (Ollama) ---" -ForegroundColor Yellow
-    $ollamaInstalled = Get-Command ollama -ErrorAction SilentlyContinue
-    if ($ollamaInstalled) {
-        & ollama list
+    $ollamaBin = Get-Command ollama -ErrorAction SilentlyContinue
+    if (-not $ollamaBin) {
+        $candidate = "$env:LOCALAPPDATA\Programs\Ollama\ollama.exe"
+        if (Test-Path $candidate) {
+            $ollamaBin = $candidate
+        }
+    }
+
+    if ($ollamaBin) {
+        & $ollamaBin list
     } else {
         Write-Host "Ollama CLI is not in PATH or not yet running." -ForegroundColor Gray
     }
@@ -95,15 +137,15 @@ function Show-StorageStatus {
 }
 
 function Archive-ModelToDrive {
-    param([string]$Model)
+    param([string]$Model, [string]$Root = $ResolvedDriveRoot)
 
     if (-not $Model) {
         throw "Please specify a model to archive. Example: .\ai-model-manager.ps1 archive qwen2.5:7b"
     }
 
     $modelsPath = Get-OllamaStoragePath
-    $destRoot = Join-Path $DriveRoot 'Models'
-    Ensure-GoogleDriveTree -Root $DriveRoot
+    $destRoot = Join-Path $Root 'Models'
+    Ensure-GoogleDriveTree -Root $Root
 
     # Format model name for safe folder path (replace : with _)
     $safeName = $Model.Replace(':', '_')
@@ -173,14 +215,14 @@ function Archive-ModelToDrive {
 }
 
 function Restore-ModelFromDrive {
-    param([string]$Model)
+    param([string]$Model, [string]$Root = $ResolvedDriveRoot)
 
     if (-not $Model) {
         throw "Please specify a model to restore. Example: .\ai-model-manager.ps1 restore qwen2.5:7b"
     }
 
     $modelsPath = Get-OllamaStoragePath
-    $destRoot = Join-Path $DriveRoot 'Models'
+    $destRoot = Join-Path $Root 'Models'
     $safeName = $Model.Replace(':', '_')
     $srcDir = Join-Path $destRoot $safeName
 
@@ -233,11 +275,11 @@ function Restore-ModelFromDrive {
 switch ($Action) {
     'status'         { Show-StorageStatus }
     'list'           { Show-StorageStatus }
-    'archive'        { Archive-ModelToDrive -Model $ModelName }
-    'restore'        { Restore-ModelFromDrive -Model $ModelName }
+    'archive'        { Archive-ModelToDrive -Model $ModelName -Root $ResolvedDriveRoot }
+    'restore'        { Restore-ModelFromDrive -Model $ModelName -Root $ResolvedDriveRoot }
     'backup-configs' {
-        Ensure-GoogleDriveTree -Root $DriveRoot
-        $cfgDst = Join-Path $DriveRoot 'Configurations'
+        Ensure-GoogleDriveTree -Root $ResolvedDriveRoot
+        $cfgDst = Join-Path $ResolvedDriveRoot 'Configurations'
         Write-Host "Configurations backed up to $cfgDst" -ForegroundColor Green
     }
 }
