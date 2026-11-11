@@ -11,6 +11,11 @@ credentials.json
 scratch/
 OllamaSetup.exe
 
+# Python virtual environment
+venv/
+__pycache__/
+*.pyc
+
 # Ignore local models (these are managed on SSD/Google Drive)
 models/
 blobs/
